@@ -5,13 +5,25 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "robotdev-tools"
 version = "0.2.0"
-description = "ROS-free rosbag2 experiment health reports for robotics teams"
+description = "Automated ROS 2 rosbag2 analyzer, validator, diagnostics, and quality reports"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "RobotDev Tools contributors" }]
-keywords = ["robotics", "ros2", "rosbag2", "mcap", "testing", "diagnostics"]
+keywords = [
+  "robotics",
+  "ros2",
+  "rosbag",
+  "rosbag2",
+  "rosbag2-analyzer",
+  "rosbag2-validator",
+  "mcap",
+  "db3",
+  "automated-testing",
+  "quality-gate",
+  "diagnostics",
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",

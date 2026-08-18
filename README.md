@@ -1,4 +1,16 @@
-# RobotDev Tools
+# RobotDev Tools — ROSBag2 Automated Analyzer & Validator
+
+**ROS 2 rosbag2 自动化检测、质量验收与故障诊断工具 / Automated ROS 2 bag analysis,
+validation, diagnostics, and PASS/FAIL reporting.**
+
+[![CI](https://github.com/1405264556/robotdev-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/1405264556/robotdev-tools/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/1405264556/robotdev-tools)](https://github.com/1405264556/robotdev-tools/releases/latest)
+[![Python](https://img.shields.io/badge/Python-3.10--3.13-3776AB)](https://www.python.org/)
+[![License](https://img.shields.io/github/license/1405264556/robotdev-tools)](LICENSE)
+
+> Search terms / 检索关键词：`rosbag2 analyzer` · `rosbag2 validator` ·
+> `ROS 2 bag diagnostics` · `MCAP analyzer` · `DB3 analyzer` · `rosbag2 quality gate` ·
+> `rosbag2 自动化检测` · `ROS2 bag 故障诊断`
 
 [中文](#中文) · [English](#english) · [详细使用指南](docs/USAGE.zh-CN.md) ·
 [测试数据与验收](docs/TESTING.md)
@@ -7,7 +19,9 @@
 
 ## 中文
 
-RobotDev Tools 是面向机器人实验室的 **ROS 2 离线实验验收工具**。它直接读取
+RobotDev Tools 是面向机器人实验室的 **ROS 2 rosbag2 自动化检测、分析与实验验收工具**。
+它也可以作为 rosbag2 analyzer、rosbag2 validator、ROS bag diagnostics 或 CI quality gate
+使用。工具直接读取
 rosbag2（SQLite3 / MCAP），自动计算 Topic 健康度，并对激光雷达、IMU、里程计、TF、
 控制指令、关节状态、定位、规划轨迹和故障诊断进行专项检测。新版报告还会根据 bag 中的
 Topic/类型证据重建 ROS 节点职责和数据流，生成 PASS / WARN / FAIL 门禁、自包含 HTML
@@ -17,6 +31,14 @@ Topic/类型证据重建 ROS 节点职责和数据流，生成 PASS / WARN / FAI
 - 数据只在本机处理，不上传 bag。
 - Windows 和 Linux 均支持 Python 3.10–3.13。
 - 可使用终端批处理，也可使用本地桌面界面选择文件。
+
+### 一条命令完成 rosbag2 自动检测
+
+```bash
+robotdev analyze /path/to/rosbag2 --config robotdev.yaml --output report
+```
+
+输出独立的 `report.html` 和适合自动化/CI 的 `summary.json`；故障门禁返回退出码 `2`。
 
 ### 应该选择哪种使用方式？
 
@@ -299,9 +321,10 @@ cat ./robotdev-demo/normal/summary.json
 
 ## English
 
-RobotDev Tools is a local, ROS-free experiment acceptance tool for robotics teams. It reads ROS 2
-SQLite3 and MCAP bags, evaluates Topic timing plus LiDAR, IMU, odometry, TF, commands, joints,
-localization, paths, and diagnostics, then writes a self-contained HTML report plus stable JSON.
+RobotDev Tools is an automated ROS 2 rosbag2 analyzer, validator, diagnostics tool, and CI quality
+gate for robotics teams. It reads SQLite3/DB3 and MCAP bags, evaluates Topic timing plus LiDAR, IMU,
+odometry, TF, commands, joints, localization, paths, and diagnostics, then writes a self-contained
+HTML report plus stable JSON.
 The report reconstructs node responsibilities and data flow from recorded Topic/type evidence; it
 does not claim to recover process-level node names that rosbag2 does not normally store.
 

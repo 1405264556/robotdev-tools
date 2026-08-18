@@ -4,6 +4,9 @@ All notable changes to RobotDev Tools are documented here.
 
 ## Unreleased
 
+- Improve GitHub discoverability with explicit rosbag2 analyzer, validator, diagnostics, MCAP/DB3,
+  automated-testing, and quality-gate terminology in repository metadata and README entry points.
+
 ## 0.2.0 - 2026-08-18
 
 - Add a local desktop interface through `robotdev gui` with file/folder selection and automatic

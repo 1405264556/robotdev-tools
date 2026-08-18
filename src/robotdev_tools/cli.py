@@ -16,7 +16,7 @@ from robotdev_tools.report import write_report
 
 app = typer.Typer(
     name="robotdev",
-    help="ROS-free rosbag2 experiment health reports.",
+    help="Automated ROS 2 rosbag2 analysis, validation, and diagnostics.",
     no_args_is_help=True,
     add_completion=False,
 )
@@ -35,7 +35,7 @@ def main(
         typer.Option("--version", callback=_version, is_eager=True, help="Show version and exit."),
     ] = None,
 ) -> None:
-    """RobotDev Tools turns rosbag2 files into quality-gate reports."""
+    """Turn rosbag2 DB3/MCAP files into diagnostics and quality-gate reports."""
 
 
 @app.command()
