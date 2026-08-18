@@ -78,5 +78,14 @@ strict = true
 packages = ["robotdev_tools"]
 
 [[tool.mypy.overrides]]
-module = ["plotly", "plotly.*"]
+module = [
+  "numpy",
+  "numpy.*",
+  "plotly",
+  "plotly.*",
+  "rosbags",
+  "rosbags.*",
+  "yaml",
+]
 ignore_missing_imports = true
+follow_imports = "skip"

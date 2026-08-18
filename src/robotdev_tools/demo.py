@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 from rosbags.rosbag2 import StoragePlugin, Writer
@@ -76,7 +76,7 @@ def generate_demo_bag(
         odom_connection = writer.add_connection(
             "/odom", Odometry.__msgtype__, typestore=typestore
         )
-        covariance = np.zeros(36, dtype=np.float64)
+        covariance: Any = np.zeros(36, dtype=np.float64)
         for timestamp, kind, index in events:
             if kind == "scan":
                 message = Float64(data=float(index))
