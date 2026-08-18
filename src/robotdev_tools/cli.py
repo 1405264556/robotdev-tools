@@ -114,5 +114,28 @@ def demo(
     typer.echo(f"Demo ready: {(output / 'index.html').resolve()}")
 
 
+@app.command()
+def gui(
+    bag_path: Annotated[
+        Path | None, typer.Option("--bag", help="Preselect a rosbag2 directory, .db3, or .mcap")
+    ] = None,
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Preselect a RobotDev YAML config")
+    ] = None,
+    output: Annotated[
+        Path | None, typer.Option("--output", "-o", help="Preselect the report output directory")
+    ] = None,
+) -> None:
+    """Open the local desktop interface."""
+
+    from robotdev_tools.gui import GUIUnavailableError, launch_gui
+
+    try:
+        launch_gui(bag_path=bag_path, config_path=config, output_path=output)
+    except GUIUnavailableError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+
 if __name__ == "__main__":
     app()
