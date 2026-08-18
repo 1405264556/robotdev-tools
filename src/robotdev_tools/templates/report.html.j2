@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RobotDev Report · {{ result.status }}</title>
+  <style>
+    :root {
+      --ink: #162033; --muted: #697386; --paper: #ffffff; --canvas: #f3f6fb;
+      --line: #dce3ef; --blue: #2864dc; --pass: #087f5b; --warn: #b15d00; --fail: #c92a2a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    header { background: linear-gradient(135deg, #12233f, #234b88); color: white; padding: 44px 24px 88px; }
+    header .inner, main { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .brand { color: #b9d2ff; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+    h1 { font-size: clamp(30px, 5vw, 52px); margin: 10px 0 8px; letter-spacing: -.035em; line-height: 1.1; }
+    .subtitle { color: #dce7fa; margin: 0; max-width: 720px; }
+    main { margin-top: -52px; padding-bottom: 60px; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(18,35,63,.07); padding: 24px; margin-bottom: 20px; overflow: hidden; }
+    .hero { display: grid; grid-template-columns: 190px 1fr; gap: 28px; align-items: center; }
+    .status { display: grid; place-items: center; min-height: 130px; border-radius: 13px; color: white; font-size: 25px; font-weight: 800; letter-spacing: .04em; }
+    .status.PASS { background: var(--pass); } .status.WARN { background: var(--warn); }
+    .status.FAIL { background: var(--fail); } .status.NOT_EVALUATED { background: #566074; font-size: 17px; text-align: center; }
+    .meta { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+    .meta div, .metric { border-left: 3px solid #d6e3fb; padding-left: 12px; min-width: 0; }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .value { font-size: 20px; font-weight: 750; margin-top: 3px; overflow-wrap: anywhere; }
+    h2 { font-size: 22px; margin: 0 0 18px; letter-spacing: -.015em; }
+    h3 { font-size: 16px; margin: 20px 0 10px; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; text-align: left; }
+    th, td { border-bottom: 1px solid var(--line); padding: 11px 9px; white-space: nowrap; }
+    td:first-child, th:first-child { white-space: normal; }
+    tbody tr:hover { background: #f8faff; }
+    .scroll { overflow-x: auto; }
+    .badge { display: inline-flex; align-items: center; border-radius: 99px; padding: 4px 9px; font-size: 12px; font-weight: 800; color: white; }
+    .badge.PASS { background: var(--pass); } .badge.WARN { background: var(--warn); } .badge.FAIL { background: var(--fail); }
+    .checks { display: grid; gap: 10px; }
+    .check { display: grid; grid-template-columns: 64px 1fr; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 11px; }
+    .check p { margin: 2px 0 0; color: var(--muted); }
+    .metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 18px; }
+    .note { background: #edf4ff; border: 1px solid #c8daf8; color: #284468; border-radius: 10px; padding: 12px 14px; margin-top: 16px; }
+    .warning { background: #fff7e6; border-color: #f5d59b; color: #704700; }
+    footer { color: var(--muted); text-align: center; font-size: 12px; padding: 15px; }
+    @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .meta, .metrics { grid-template-columns: repeat(2,1fr); } }
+    @media print { body { background: white; } header { padding-bottom: 44px; } main { margin-top: 0; } .card { break-inside: avoid; box-shadow: none; } }
+  </style>
+</head>
+<body>
+  <header><div class="inner">
+    <div class="brand">RobotDev Tools · v{{ result.tool_version }}</div>
+    <h1>Experiment health report</h1>
+    <p class="subtitle">ROS 2 实验健康报告 · Offline, reproducible, and ready for quality gates.</p>
+  </div></header>
+  <main>
+    <section class="card hero">
+      <div class="status {{ result.status }}">{{ result.status.replace('_', ' ') }}</div>
+      <div class="meta">
+        <div><div class="label">Messages</div><div class="value">{{ result.bag.message_count }}</div></div>
+        <div><div class="label">Topics</div><div class="value">{{ result.bag.topic_count }}</div></div>
+        <div><div class="label">Duration</div><div class="value">{{ '%.2f'|format(result.bag.duration_s) }} s</div></div>
+        <div><div class="label">Storage</div><div class="value">{{ result.bag.storage_format }}</div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Recording / 记录信息</h2>
+      <div class="metrics">
+        <div class="metric"><div class="label">Source</div><div class="value" style="font-size:14px">{{ result.bag.source }}</div></div>
+        <div class="metric"><div class="label">ROS distro</div><div class="value">{{ result.bag.ros_distro or 'auto' }}</div></div>
+        <div class="metric"><div class="label">Generated UTC</div><div class="value" style="font-size:14px">{{ result.generated_at }}</div></div>
+        <div class="metric"><div class="label">Schema</div><div class="value">{{ result.schema_version }}</div></div>
+      </div>
+      {% if sampled %}<div class="note">Large streams were sampled for charts (maximum {{ result.topics[0].sample_limit }} points per topic); aggregate counts, rates, standard deviation, and maxima remain streaming statistics.</div>{% endif %}
+      {% if not result.config_applied %}<div class="note warning">No gate configuration was supplied. Metrics were calculated, but the run is deliberately marked NOT EVALUATED.</div>{% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Quality gates / 质量门禁</h2>
+      {% if result.checks %}
+      <div class="checks">
+        {% for check in result.checks %}
+        <div class="check">
+          <div><span class="badge {{ check.status }}">{{ check.status }}</span></div>
+          <div><strong>{{ check.message }}</strong>{% if check.suggestion %}<p>{{ check.suggestion }}</p>{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}<p>No configured checks. / 未配置质量门禁。</p>{% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Topic health / Topic 健康度</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Topic</th><th>Type</th><th>Messages</th><th>Mean Hz</th><th>Median Hz</th><th>Jitter ms</th><th>Max gap ms</th><th>Gaps</th><th>Duplicate</th><th>Reversed</th></tr></thead>
+        <tbody>{% for topic in result.topics %}<tr>
+          <td><strong>{{ topic.name }}</strong></td><td>{{ topic.message_type }}</td><td>{{ topic.message_count }}</td>
+          <td>{{ '%.3f'|format(topic.mean_rate_hz) if topic.mean_rate_hz is not none else '—' }}</td>
+          <td>{{ '%.3f'|format(topic.median_rate_hz) if topic.median_rate_hz is not none else '—' }}</td>
+          <td>{{ '%.3f'|format(topic.jitter_ms) if topic.jitter_ms is not none else '—' }}</td>
+          <td>{{ '%.3f'|format(topic.max_gap_ms) if topic.max_gap_ms is not none else '—' }}</td>
+          <td>{{ '~' if topic.gap_count_estimated else '' }}{{ topic.gap_count }}</td><td>{{ topic.duplicate_timestamps }}</td><td>{{ topic.reversed_timestamps }}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% if topic_figure %}{{ topic_figure|safe }}{% endif %}
+    </section>
+
+    {% if result.odometry %}<section class="card">
+      <h2>Odometry / 里程计</h2>
+      <div class="metrics">
+        <div class="metric"><div class="label">Distance</div><div class="value">{{ '%.3f'|format(result.odometry.total_distance_m) if result.odometry.total_distance_m is not none else '—' }} m</div></div>
+        <div class="metric"><div class="label">Displacement</div><div class="value">{{ '%.3f'|format(result.odometry.displacement_m) if result.odometry.displacement_m is not none else '—' }} m</div></div>
+        <div class="metric"><div class="label">Max speed</div><div class="value">{{ '%.3f'|format(result.odometry.max_linear_speed_mps) if result.odometry.max_linear_speed_mps is not none else '—' }} m/s</div></div>
+        <div class="metric"><div class="label">P95 speed</div><div class="value">{{ '%.3f'|format(result.odometry.p95_linear_speed_mps) if result.odometry.p95_linear_speed_mps is not none else '—' }} m/s</div></div>
+        <div class="metric"><div class="label">Max acceleration</div><div class="value">{{ '%.3f'|format(result.odometry.max_acceleration_mps2) if result.odometry.max_acceleration_mps2 is not none else '—' }} m/s²</div></div>
+        <div class="metric"><div class="label">Max position jump</div><div class="value">{{ '%.3f'|format(result.odometry.max_position_jump_m) if result.odometry.max_position_jump_m is not none else '—' }} m</div></div>
+        <div class="metric"><div class="label">Decoded</div><div class="value">{{ result.odometry.decoded_count }}/{{ result.odometry.message_count }}</div></div>
+        <div class="metric"><div class="label">Decode errors</div><div class="value">{{ result.odometry.decode_errors }}</div></div>
+      </div>
+      {% if odometry_figure %}{{ odometry_figure|safe }}{% endif %}
+    </section>{% endif %}
+
+    {% if result.warnings %}<section class="card"><h2>Warnings / 警告</h2><ul>{% for warning in result.warnings %}<li>{{ warning }}</li>{% endfor %}</ul></section>{% endif %}
+  </main>
+  <footer>Generated locally by RobotDev Tools · No data uploaded / 数据仅在本地处理</footer>
+</body>
+</html>

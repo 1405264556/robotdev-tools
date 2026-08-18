@@ -1,0 +1,16 @@
+version: 1
+warn_margin_pct: 10
+
+topics:
+  /scan:
+    required: true
+    expected_rate_hz: 10
+    rate_tolerance_pct: 10
+    max_gap_ms: 250
+    max_jitter_ms: 20
+
+odometry:
+  topic: /odom
+  max_speed_mps: 1.5
+  max_accel_mps2: 2.0
+  max_position_jump_m: 0.5
