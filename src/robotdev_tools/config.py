@@ -36,12 +36,21 @@ class OdometryRule:
 
 
 @dataclass(slots=True)
+class NodeRule:
+    """Offline node-responsibility contract backed by recorded Topics."""
+
+    required: bool = True
+    topics: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class AnalysisConfig:
     """Top-level versioned configuration."""
 
     version: int = 1
     warn_margin_pct: float = 10.0
     topics: dict[str, TopicRule] = field(default_factory=dict)
+    nodes: dict[str, NodeRule] = field(default_factory=dict)
     odometry: OdometryRule | None = None
     ros_distro: str | None = None
 
@@ -62,7 +71,14 @@ def _positive(name: str, value: Any, *, allow_zero: bool = False) -> float | Non
 
 
 def _from_mapping(data: Mapping[str, Any]) -> AnalysisConfig:
-    unknown = set(data) - {"version", "warn_margin_pct", "topics", "odometry", "ros_distro"}
+    unknown = set(data) - {
+        "version",
+        "warn_margin_pct",
+        "topics",
+        "nodes",
+        "odometry",
+        "ros_distro",
+    }
     if unknown:
         raise ConfigError(f"unknown top-level keys: {', '.join(sorted(unknown))}")
     version = data.get("version", 1)
@@ -110,10 +126,35 @@ def _from_mapping(data: Mapping[str, Any]) -> AnalysisConfig:
             ),
             rate_tolerance_pct=tolerance,
             max_gap_ms=_positive(f"topics.{topic}.max_gap_ms", raw.get("max_gap_ms")),
-            max_jitter_ms=_positive(
-                f"topics.{topic}.max_jitter_ms", raw.get("max_jitter_ms")
-            ),
+            max_jitter_ms=_positive(f"topics.{topic}.max_jitter_ms", raw.get("max_jitter_ms")),
         )
+
+    nodes_data = data.get("nodes", {})
+    if not isinstance(nodes_data, Mapping):
+        raise ConfigError("nodes must be a mapping of node names to Topic contracts")
+    nodes: dict[str, NodeRule] = {}
+    for node_name, raw in nodes_data.items():
+        if not isinstance(node_name, str) or not node_name.strip():
+            raise ConfigError("node name must be a non-empty string")
+        if not isinstance(raw, Mapping):
+            raise ConfigError(f"node contract for {node_name} must be a mapping")
+        extra = set(raw) - {"required", "topics"}
+        if extra:
+            raise ConfigError(f"unknown keys for node {node_name}: {', '.join(sorted(extra))}")
+        required = raw.get("required", True)
+        if not isinstance(required, bool):
+            raise ConfigError(f"nodes.{node_name}.required must be true or false")
+        node_topics = raw.get("topics")
+        if not isinstance(node_topics, list) or not node_topics:
+            raise ConfigError(f"nodes.{node_name}.topics must be a non-empty list")
+        normalized_topics: list[str] = []
+        for node_topic in node_topics:
+            if not isinstance(node_topic, str) or not node_topic.startswith("/"):
+                raise ConfigError(
+                    f"nodes.{node_name}.topics entries must start with '/': {node_topic!r}"
+                )
+            normalized_topics.append(node_topic)
+        nodes[node_name] = NodeRule(required=required, topics=normalized_topics)
 
     odom_raw = data.get("odometry")
     odometry: OdometryRule | None = None
@@ -135,9 +176,7 @@ def _from_mapping(data: Mapping[str, Any]) -> AnalysisConfig:
         odometry = OdometryRule(
             topic=topic,
             max_speed_mps=_positive("odometry.max_speed_mps", odom_raw.get("max_speed_mps")),
-            max_accel_mps2=_positive(
-                "odometry.max_accel_mps2", odom_raw.get("max_accel_mps2")
-            ),
+            max_accel_mps2=_positive("odometry.max_accel_mps2", odom_raw.get("max_accel_mps2")),
             max_position_jump_m=_positive(
                 "odometry.max_position_jump_m", odom_raw.get("max_position_jump_m")
             ),
@@ -150,6 +189,7 @@ def _from_mapping(data: Mapping[str, Any]) -> AnalysisConfig:
         version=1,
         warn_margin_pct=warn_margin,
         topics=topics,
+        nodes=nodes,
         odometry=odometry,
         ros_distro=ros_distro,
     )

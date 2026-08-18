@@ -6,122 +6,141 @@
   <title>RobotDev Report · {{ result.status }}</title>
   <style>
     :root {
-      --ink: #162033; --muted: #697386; --paper: #ffffff; --canvas: #f3f6fb;
-      --line: #dce3ef; --blue: #2864dc; --pass: #087f5b; --warn: #b15d00; --fail: #c92a2a;
+      --ink:#142033; --muted:#64748b; --paper:#fff; --canvas:#eef3f9; --line:#d9e2ef;
+      --blue:#2563eb; --navy:#10213d; --pass:#14805e; --warn:#d97706; --fail:#dc2626;
+      --none:#64748b; --shadow:0 14px 36px rgba(15,34,62,.08);
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--canvas); color: var(--ink); font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-    header { background: linear-gradient(135deg, #12233f, #234b88); color: white; padding: 44px 24px 88px; }
-    header .inner, main { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
-    .brand { color: #b9d2ff; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
-    h1 { font-size: clamp(30px, 5vw, 52px); margin: 10px 0 8px; letter-spacing: -.035em; line-height: 1.1; }
-    .subtitle { color: #dce7fa; margin: 0; max-width: 720px; }
-    main { margin-top: -52px; padding-bottom: 60px; }
-    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(18,35,63,.07); padding: 24px; margin-bottom: 20px; overflow: hidden; }
-    .hero { display: grid; grid-template-columns: 190px 1fr; gap: 28px; align-items: center; }
-    .status { display: grid; place-items: center; min-height: 130px; border-radius: 13px; color: white; font-size: 25px; font-weight: 800; letter-spacing: .04em; }
-    .status.PASS { background: var(--pass); } .status.WARN { background: var(--warn); }
-    .status.FAIL { background: var(--fail); } .status.NOT_EVALUATED { background: #566074; font-size: 17px; text-align: center; }
-    .meta { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
-    .meta div, .metric { border-left: 3px solid #d6e3fb; padding-left: 12px; min-width: 0; }
-    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-    .value { font-size: 20px; font-weight: 750; margin-top: 3px; overflow-wrap: anywhere; }
-    h2 { font-size: 22px; margin: 0 0 18px; letter-spacing: -.015em; }
-    h3 { font-size: 16px; margin: 20px 0 10px; }
-    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-    th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; text-align: left; }
-    th, td { border-bottom: 1px solid var(--line); padding: 11px 9px; white-space: nowrap; }
-    td:first-child, th:first-child { white-space: normal; }
-    tbody tr:hover { background: #f8faff; }
-    .scroll { overflow-x: auto; }
-    .badge { display: inline-flex; align-items: center; border-radius: 99px; padding: 4px 9px; font-size: 12px; font-weight: 800; color: white; }
-    .badge.PASS { background: var(--pass); } .badge.WARN { background: var(--warn); } .badge.FAIL { background: var(--fail); }
-    .checks { display: grid; gap: 10px; }
-    .check { display: grid; grid-template-columns: 64px 1fr; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 11px; }
-    .check p { margin: 2px 0 0; color: var(--muted); }
-    .metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 18px; }
-    .note { background: #edf4ff; border: 1px solid #c8daf8; color: #284468; border-radius: 10px; padding: 12px 14px; margin-top: 16px; }
-    .warning { background: #fff7e6; border-color: #f5d59b; color: #704700; }
-    footer { color: var(--muted); text-align: center; font-size: 12px; padding: 15px; }
-    @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .meta, .metrics { grid-template-columns: repeat(2,1fr); } }
-    @media print { body { background: white; } header { padding-bottom: 44px; } main { margin-top: 0; } .card { break-inside: avoid; box-shadow: none; } }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;background:var(--canvas);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    header{background:radial-gradient(circle at 85% 10%,#315f9f 0,transparent 35%),linear-gradient(135deg,#0d1c34,#173866);color:#fff;padding:42px 24px 96px}
+    header .inner,main{width:min(1240px,calc(100% - 40px));margin:auto}
+    .brand{color:#bcd4fb;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px}
+    h1{font-size:clamp(32px,5vw,54px);line-height:1.06;letter-spacing:-.04em;margin:11px 0 9px}
+    .subtitle{color:#dbeafe;margin:0;max-width:790px;font-size:16px}
+    nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px} nav a{color:#dbeafe;text-decoration:none;border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:6px 11px;font-size:12px}
+    main{margin-top:-58px;padding-bottom:62px}.card{background:var(--paper);border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);padding:25px;margin-bottom:20px;overflow:hidden}
+    .hero{display:grid;grid-template-columns:180px 1fr;gap:26px;align-items:stretch}.gate{display:grid;place-items:center;border-radius:14px;color:#fff;text-align:center;font-size:25px;font-weight:900;letter-spacing:.035em;min-height:145px}.gate.PASS,.health.HEALTHY,.badge.PASS,.badge.HEALTHY{background:var(--pass)}.gate.WARN,.health.DEGRADED,.badge.WARN,.badge.DEGRADED{background:var(--warn)}.gate.FAIL,.health.FAULT,.badge.FAIL,.badge.FAULT{background:var(--fail)}.gate.NOT_EVALUATED,.health.NO_DATA,.badge.NO_DATA{background:var(--none)}
+    .hero-main{display:grid;grid-template-rows:auto 1fr;gap:15px}.hero-top{display:flex;align-items:center;justify-content:space-between;gap:16px}.health{color:#fff;border-radius:99px;padding:7px 12px;font-size:12px;font-weight:850;white-space:nowrap}
+    .meta,.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.metric{border-left:3px solid #cfddf3;padding-left:11px;min-width:0}.label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.055em}.value{font-size:20px;font-weight:780;margin-top:3px;overflow-wrap:anywhere}.value.small{font-size:13px}
+    h2{font-size:23px;margin:0 0 18px;letter-spacing:-.02em}h3{font-size:17px;margin:0 0 10px}.section-intro{color:var(--muted);margin:-10px 0 19px;max-width:900px}
+    .note{background:#edf4ff;border:1px solid #c7daf7;color:#28486f;border-radius:11px;padding:12px 14px;margin:13px 0}.note.warning{background:#fff7e8;border-color:#f4d399;color:#724900}.note.danger{background:#fff0f0;border-color:#f4b7b7;color:#852020}
+    .badge{display:inline-flex;color:#fff;border-radius:99px;padding:4px 9px;font-size:11px;font-weight:850;letter-spacing:.025em}.badge.NOT_EVALUATED{background:var(--none)}
+    .overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.overview-item{border:1px solid var(--line);border-radius:13px;padding:15px;background:#f9fbfe}.overview-item strong{font-size:27px;display:block}.overview-item span{color:var(--muted);font-size:12px}
+    .node-grid,.subsystem-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.node,.subsystem{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fbfdff}.node-head,.subsystem-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.node p,.subsystem p{color:var(--muted);margin:7px 0}.topic-list{font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;color:#31547d;overflow-wrap:anywhere}.confidence{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.mini-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}.mini{background:#f1f5fa;border-radius:9px;padding:9px}.mini .value{font-size:15px}.issues{margin:13px 0 0;padding-left:19px;color:#9f2525}.suggestions{margin:8px 0 0;padding-left:19px;color:#7a5100}
+    .flow-list{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px}.flow{font-size:12px;background:#edf4ff;border:1px solid #ccdcf6;border-radius:99px;padding:5px 9px;color:#31547d}
+    .checks{display:grid;gap:9px}.check{display:grid;grid-template-columns:66px 1fr;gap:13px;padding:13px;border:1px solid var(--line);border-radius:11px}.check p{margin:2px 0 0;color:var(--muted)}
+    .scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;text-align:left}th,td{border-bottom:1px solid var(--line);padding:10px 8px;white-space:nowrap}td:first-child,th:first-child{white-space:normal}tbody tr:hover{background:#f7faff}
+    .plot{margin-top:18px;border-top:1px solid var(--line);padding-top:8px}.limitations{font-size:12px;color:var(--muted)}footer{color:var(--muted);text-align:center;font-size:12px;padding:15px}
+    @media(max-width:900px){.node-grid,.subsystem-grid{grid-template-columns:repeat(2,1fr)}.meta,.metrics,.overview{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:660px){header .inner,main{width:min(100% - 22px,1240px)}.hero{grid-template-columns:1fr}.node-grid,.subsystem-grid{grid-template-columns:1fr}.hero-top{align-items:flex-start;flex-direction:column}.card{padding:18px}}
+    @media print{body{background:#fff}header{padding-bottom:42px}main{margin-top:0}.card{box-shadow:none;break-inside:avoid}nav{display:none}}
   </style>
 </head>
 <body>
+  {% set fault_count = result.subsystems|selectattr('status','equalto','FAULT')|list|length %}
+  {% set degraded_count = result.subsystems|selectattr('status','equalto','DEGRADED')|list|length %}
+  {% set healthy_count = result.subsystems|selectattr('status','equalto','HEALTHY')|list|length %}
   <header><div class="inner">
     <div class="brand">RobotDev Tools · v{{ result.tool_version }}</div>
-    <h1>Experiment health report</h1>
-    <p class="subtitle">ROS 2 实验健康报告 · Offline, reproducible, and ready for quality gates.</p>
+    <h1>ROS 2 experiment health report</h1>
+    <p class="subtitle">实验质量门禁、传感器与运动专项检测、TF 关系和离线 ROS 框架推断</p>
+    <nav><a href="#overview">总览</a><a href="#framework">ROS 框架</a><a href="#subsystems">专项检测</a><a href="#gates">质量门禁</a><a href="#topics">Topics</a></nav>
   </div></header>
   <main>
-    <section class="card hero">
-      <div class="status {{ result.status }}">{{ result.status.replace('_', ' ') }}</div>
-      <div class="meta">
-        <div><div class="label">Messages</div><div class="value">{{ result.bag.message_count }}</div></div>
-        <div><div class="label">Topics</div><div class="value">{{ result.bag.topic_count }}</div></div>
-        <div><div class="label">Duration</div><div class="value">{{ '%.2f'|format(result.bag.duration_s) }} s</div></div>
-        <div><div class="label">Storage</div><div class="value">{{ result.bag.storage_format }}</div></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Recording / 记录信息</h2>
-      <div class="metrics">
-        <div class="metric"><div class="label">Source</div><div class="value" style="font-size:14px">{{ result.bag.source }}</div></div>
-        <div class="metric"><div class="label">ROS distro</div><div class="value">{{ result.bag.ros_distro or 'auto' }}</div></div>
-        <div class="metric"><div class="label">Generated UTC</div><div class="value" style="font-size:14px">{{ result.generated_at }}</div></div>
-        <div class="metric"><div class="label">Schema</div><div class="value">{{ result.schema_version }}</div></div>
-      </div>
-      {% if sampled %}<div class="note">Large streams were sampled for charts (maximum {{ result.topics[0].sample_limit }} points per topic); aggregate counts, rates, standard deviation, and maxima remain streaming statistics.</div>{% endif %}
-      {% if not result.config_applied %}<div class="note warning">No gate configuration was supplied. Metrics were calculated, but the run is deliberately marked NOT EVALUATED.</div>{% endif %}
-    </section>
-
-    <section class="card">
-      <h2>Quality gates / 质量门禁</h2>
-      {% if result.checks %}
-      <div class="checks">
-        {% for check in result.checks %}
-        <div class="check">
-          <div><span class="badge {{ check.status }}">{{ check.status }}</span></div>
-          <div><strong>{{ check.message }}</strong>{% if check.suggestion %}<p>{{ check.suggestion }}</p>{% endif %}</div>
+    <section class="card hero" id="overview">
+      <div class="gate {{ result.status }}"><div><div style="font-size:11px;opacity:.8">QUALITY GATE</div>{{ result.status.replace('_',' ') }}</div></div>
+      <div class="hero-main">
+        <div class="hero-top"><div><h2 style="margin:0">Experiment overview / 实验总览</h2><div class="section-intro" style="margin:4px 0 0">{{ result.bag.source }}</div></div>{% if result.framework %}<span class="health {{ result.framework.status }}">ROS FRAMEWORK · {{ result.framework.status }}</span>{% endif %}</div>
+        <div class="meta">
+          <div class="metric"><div class="label">Messages</div><div class="value">{{ result.bag.message_count }}</div></div>
+          <div class="metric"><div class="label">Topics</div><div class="value">{{ result.bag.topic_count }}</div></div>
+          <div class="metric"><div class="label">Duration</div><div class="value">{{ '%.2f'|format(result.bag.duration_s) }} s</div></div>
+          <div class="metric"><div class="label">Framework coverage</div><div class="value">{{ '%.1f'|format(result.framework.coverage_pct) if result.framework else '0.0' }}%</div></div>
         </div>
-        {% endfor %}
       </div>
-      {% else %}<p>No configured checks. / 未配置质量门禁。</p>{% endif %}
     </section>
 
     <section class="card">
-      <h2>Topic health / Topic 健康度</h2>
-      <div class="scroll"><table>
-        <thead><tr><th>Topic</th><th>Type</th><th>Messages</th><th>Mean Hz</th><th>Median Hz</th><th>Jitter ms</th><th>Max gap ms</th><th>Gaps</th><th>Duplicate</th><th>Reversed</th></tr></thead>
-        <tbody>{% for topic in result.topics %}<tr>
-          <td><strong>{{ topic.name }}</strong></td><td>{{ topic.message_type }}</td><td>{{ topic.message_count }}</td>
-          <td>{{ '%.3f'|format(topic.mean_rate_hz) if topic.mean_rate_hz is not none else '—' }}</td>
-          <td>{{ '%.3f'|format(topic.median_rate_hz) if topic.median_rate_hz is not none else '—' }}</td>
-          <td>{{ '%.3f'|format(topic.jitter_ms) if topic.jitter_ms is not none else '—' }}</td>
-          <td>{{ '%.3f'|format(topic.max_gap_ms) if topic.max_gap_ms is not none else '—' }}</td>
-          <td>{{ '~' if topic.gap_count_estimated else '' }}{{ topic.gap_count }}</td><td>{{ topic.duplicate_timestamps }}</td><td>{{ topic.reversed_timestamps }}</td>
-        </tr>{% endfor %}</tbody>
-      </table></div>
-      {% if topic_figure %}{{ topic_figure|safe }}{% endif %}
+      <h2>Executive summary / 结论摘要</h2>
+      <div class="overview">
+        <div class="overview-item"><strong style="color:var(--pass)">{{ healthy_count }}</strong><span>Healthy subsystems / 健康子系统</span></div>
+        <div class="overview-item"><strong style="color:var(--warn)">{{ degraded_count }}</strong><span>Degraded / 需要关注</span></div>
+        <div class="overview-item"><strong style="color:var(--fail)">{{ fault_count }}</strong><span>Faults / 故障</span></div>
+        <div class="overview-item"><strong>{{ result.checks|selectattr('status','equalto','FAIL')|list|length }}</strong><span>Failed configured gates / 门禁失败</span></div>
+      </div>
+      {% if not result.config_applied %}<div class="note warning">未提供门禁配置，因此总体结果为 NOT EVALUATED；下方 ROS 专项健康状态仍基于 NaN/Inf、TF 环路、诊断 ERROR、空轨迹等数据完整性规则生成。</div>{% endif %}
+      {% if sampled %}<div class="note">大数据流的图表最多保留 {{ result.topics[0].sample_limit }} 点；消息总数、均值、标准差和极值仍采用流式统计。</div>{% endif %}
+      <div class="metrics" style="margin-top:18px">
+        <div class="metric"><div class="label">Storage</div><div class="value">{{ result.bag.storage_format }}</div></div>
+        <div class="metric"><div class="label">ROS distro</div><div class="value">{{ result.bag.ros_distro or 'auto' }}</div></div>
+        <div class="metric"><div class="label">Schema</div><div class="value">{{ result.schema_version }}</div></div>
+        <div class="metric"><div class="label">Generated UTC</div><div class="value small">{{ result.generated_at }}</div></div>
+      </div>
+    </section>
+
+    {% if result.framework %}<section class="card" id="framework">
+      <h2>ROS framework analysis / ROS 框架分析</h2>
+      <p class="section-intro">基于 bag 中实际记录的 Topic 和标准消息类型重建节点职责与数据流。它展示“哪些职责有数据证据”，不声称恢复 rosbag2 未保存的真实进程名称。</p>
+      <div class="note">Discovery mode: <strong>{{ result.framework.discovery_mode }}</strong> · Inferred nodes: <strong>{{ result.framework.inferred_nodes|length }}</strong> · TF components: <strong>{{ result.framework.tf_component_count }}</strong></div>
+      {% if result.framework.observed_rosout_nodes %}<div class="note"><strong>Node names observed in /rosout / 日志中观察到的节点名：</strong><span class="topic-list">{{ result.framework.observed_rosout_nodes|join(', ') }}</span><br><small>这些名称来自节点日志自报，不等同于完整发布/订阅关系或全程存活证明。</small></div>{% else %}<div class="note warning"><strong>No /rosout node-name evidence / 无日志节点名证据。</strong>以下节点均为职责推断；如需实际节点名，请在录制时包含 /rosout 或同时保存 ros2 node list。</div>{% endif %}
+      <div class="node-grid">
+        {% for node in result.framework.inferred_nodes %}<article class="node">
+          <div class="node-head"><h3>{{ node.display_name }}</h3><span class="badge {{ node.status }}">{{ node.status }}</span></div>
+          <p>{{ node.responsibility }}</p><div class="topic-list">{{ node.topics|join(', ') }}</div>
+          <div class="confidence">Confidence {{ node.confidence }} · responsibility inference</div>
+        </article>{% endfor %}
+      </div>
+      {% if result.framework.data_flows %}<div class="flow-list">{% for edge in result.framework.data_flows %}<span class="flow">{{ edge.source }} → {{ edge.target }} · {{ edge.relation }}</span>{% endfor %}</div>{% endif %}
+      {% if framework_figure %}<div class="plot">{{ framework_figure|safe }}</div>{% endif %}
+      {% if result.framework.missing_subsystems %}<div class="note warning"><strong>当前 bag 未观察到：</strong>{{ result.framework.missing_subsystems|join('；') }}。这表示记录证据缺失，不一定表示机器人运行时没有这些节点。</div>{% endif %}
+      <ul class="limitations">{% for item in result.framework.limitations %}<li>{{ item }}</li>{% endfor %}</ul>
+    </section>{% endif %}
+
+    <section class="card" id="subsystems">
+      <h2>Subsystem diagnostics / ROS 专项检测</h2>
+      <p class="section-intro">激光雷达、IMU、里程计、TF、控制指令、关节状态、定位、规划轨迹和故障诊断的消息级质量分析。</p>
+      {% if result.subsystems %}<div class="subsystem-grid">
+        {% for subsystem in result.subsystems %}<article class="subsystem">
+          <div class="subsystem-head"><h3>{{ subsystem.name }}</h3><span class="badge {{ subsystem.status }}">{{ subsystem.status }}</span></div>
+          <div class="topic-list">{{ subsystem.message_types|join(', ') }}</div>
+          <div class="mini-metrics">{% for metric in subsystem.metrics %}<div class="mini"><div class="label">{{ metric.label }}</div><div class="value">{{ metric.value if metric.value is not none else '—' }}{% if metric.unit %} <small>{{ metric.unit }}</small>{% endif %}</div></div>{% endfor %}</div>
+          {% if subsystem.issues %}<ul class="issues">{% for issue in subsystem.issues %}<li>{{ issue }}</li>{% endfor %}</ul>{% endif %}
+          {% if subsystem.suggestions %}<ul class="suggestions">{% for suggestion in subsystem.suggestions %}<li>{{ suggestion }}</li>{% endfor %}</ul>{% endif %}
+        </article>{% endfor %}
+      </div>{% else %}<div class="note warning">没有记录到可专项解码的标准 ROS 消息；Topic 时序分析仍可用。</div>{% endif %}
+    </section>
+
+    {% if result.framework and result.framework.frame_edges %}<section class="card">
+      <h2>TF tree analysis / TF 树分析</h2>
+      <div class="metrics">
+        <div class="metric"><div class="label">Relations</div><div class="value">{{ result.framework.frame_edges|length }}</div></div>
+        <div class="metric"><div class="label">Roots</div><div class="value">{{ result.framework.tf_roots|join(', ') or '—' }}</div></div>
+        <div class="metric"><div class="label">Components</div><div class="value">{{ result.framework.tf_component_count }}</div></div>
+        <div class="metric"><div class="label">Cycles</div><div class="value">{{ result.framework.tf_cycles|length }}</div></div>
+      </div>
+      {% if result.framework.multiple_parent_frames %}<div class="note danger">Multiple-parent frames / 多父坐标系：{{ result.framework.multiple_parent_frames|join(', ') }}</div>{% endif %}
+      {% if tf_figure %}<div class="plot">{{ tf_figure|safe }}</div>{% endif %}
+      <div class="scroll"><table><thead><tr><th>Parent</th><th>Child</th><th>Messages</th><th>Mode</th></tr></thead><tbody>{% for edge in result.framework.frame_edges %}<tr><td>{{ edge.parent }}</td><td>{{ edge.child }}</td><td>{{ edge.message_count }}</td><td>{{ 'static' if edge.is_static else 'dynamic' }}</td></tr>{% endfor %}</tbody></table></div>
+    </section>{% endif %}
+
+    <section class="card" id="gates">
+      <h2>Configured quality gates / 配置化质量门禁</h2>
+      {% if result.checks %}<div class="checks">{% for check in result.checks %}<div class="check"><div><span class="badge {{ check.status }}">{{ check.status }}</span></div><div><strong>{{ check.message }}</strong>{% if check.suggestion %}<p>{{ check.suggestion }}</p>{% endif %}</div></div>{% endfor %}</div>{% else %}<p>No configured checks. / 未配置质量门禁。</p>{% endif %}
+    </section>
+
+    <section class="card" id="topics">
+      <h2>Topic timing health / Topic 时序健康</h2>
+      <div class="scroll"><table><thead><tr><th>Topic</th><th>Type</th><th>Messages</th><th>Mean Hz</th><th>Median Hz</th><th>Jitter ms</th><th>Max gap ms</th><th>Gaps</th><th>Duplicate</th><th>Reversed</th></tr></thead><tbody>{% for topic in result.topics %}<tr><td><strong>{{ topic.name }}</strong></td><td>{{ topic.message_type }}</td><td>{{ topic.message_count }}</td><td>{{ '%.3f'|format(topic.mean_rate_hz) if topic.mean_rate_hz is not none else '—' }}</td><td>{{ '%.3f'|format(topic.median_rate_hz) if topic.median_rate_hz is not none else '—' }}</td><td>{{ '%.3f'|format(topic.jitter_ms) if topic.jitter_ms is not none else '—' }}</td><td>{{ '%.3f'|format(topic.max_gap_ms) if topic.max_gap_ms is not none else '—' }}</td><td>{{ '~' if topic.gap_count_estimated else '' }}{{ topic.gap_count }}</td><td>{{ topic.duplicate_timestamps }}</td><td>{{ topic.reversed_timestamps }}</td></tr>{% endfor %}</tbody></table></div>
+      {% if topic_figure %}<div class="plot">{{ topic_figure|safe }}</div>{% endif %}
     </section>
 
     {% if result.odometry %}<section class="card">
-      <h2>Odometry / 里程计</h2>
-      <div class="metrics">
-        <div class="metric"><div class="label">Distance</div><div class="value">{{ '%.3f'|format(result.odometry.total_distance_m) if result.odometry.total_distance_m is not none else '—' }} m</div></div>
-        <div class="metric"><div class="label">Displacement</div><div class="value">{{ '%.3f'|format(result.odometry.displacement_m) if result.odometry.displacement_m is not none else '—' }} m</div></div>
-        <div class="metric"><div class="label">Max speed</div><div class="value">{{ '%.3f'|format(result.odometry.max_linear_speed_mps) if result.odometry.max_linear_speed_mps is not none else '—' }} m/s</div></div>
-        <div class="metric"><div class="label">P95 speed</div><div class="value">{{ '%.3f'|format(result.odometry.p95_linear_speed_mps) if result.odometry.p95_linear_speed_mps is not none else '—' }} m/s</div></div>
-        <div class="metric"><div class="label">Max acceleration</div><div class="value">{{ '%.3f'|format(result.odometry.max_acceleration_mps2) if result.odometry.max_acceleration_mps2 is not none else '—' }} m/s²</div></div>
-        <div class="metric"><div class="label">Max position jump</div><div class="value">{{ '%.3f'|format(result.odometry.max_position_jump_m) if result.odometry.max_position_jump_m is not none else '—' }} m</div></div>
-        <div class="metric"><div class="label">Decoded</div><div class="value">{{ result.odometry.decoded_count }}/{{ result.odometry.message_count }}</div></div>
-        <div class="metric"><div class="label">Decode errors</div><div class="value">{{ result.odometry.decode_errors }}</div></div>
-      </div>
-      {% if odometry_figure %}{{ odometry_figure|safe }}{% endif %}
+      <h2>Odometry trajectory / 里程计轨迹</h2>
+      <div class="metrics"><div class="metric"><div class="label">Distance</div><div class="value">{{ result.odometry.total_distance_m if result.odometry.total_distance_m is not none else '—' }} m</div></div><div class="metric"><div class="label">Max speed</div><div class="value">{{ result.odometry.max_linear_speed_mps if result.odometry.max_linear_speed_mps is not none else '—' }} m/s</div></div><div class="metric"><div class="label">Max acceleration</div><div class="value">{{ result.odometry.max_acceleration_mps2 if result.odometry.max_acceleration_mps2 is not none else '—' }} m/s²</div></div><div class="metric"><div class="label">Max position jump</div><div class="value">{{ result.odometry.max_position_jump_m if result.odometry.max_position_jump_m is not none else '—' }} m</div></div></div>
+      {% if odometry_figure %}<div class="plot">{{ odometry_figure|safe }}</div>{% endif %}
     </section>{% endif %}
 
-    {% if result.warnings %}<section class="card"><h2>Warnings / 警告</h2><ul>{% for warning in result.warnings %}<li>{{ warning }}</li>{% endfor %}</ul></section>{% endif %}
+    {% if result.warnings %}<section class="card"><h2>Processing warnings / 处理警告</h2><ul>{% for warning in result.warnings %}<li>{{ warning }}</li>{% endfor %}</ul></section>{% endif %}
   </main>
   <footer>Generated locally by RobotDev Tools · No data uploaded / 数据仅在本地处理</footer>
 </body>

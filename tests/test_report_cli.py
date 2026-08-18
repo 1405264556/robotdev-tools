@@ -24,6 +24,13 @@ def test_report_is_self_contained_and_json_is_compact(tmp_path: Path) -> None:
     assert "<script>alert('x')</script>" not in html
     assert "timeline_s" not in payload["topics"][0]
     assert "trajectory_x_m" not in payload["odometry"]
+    assert len(payload["subsystems"]) == 9
+    assert payload["framework"]["discovery_mode"] == "INFERRED_FROM_BAG"
+    assert "lidar_driver" in payload["framework"]["observed_rosout_nodes"]
+    assert "ROS framework analysis" in html
+    assert "Subsystem diagnostics" in html
+    assert "TF tree analysis" in html
+    assert "Node names observed in /rosout" in html
     assert payload["status"] == "PASS"
 
 
@@ -44,7 +51,7 @@ def test_cli_fail_exit_code_and_artifacts(tmp_path: Path) -> None:
 def test_cli_version() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.stdout
+    assert "0.2.0" in result.stdout
 
 
 def test_cli_gui_forwards_preselected_paths(tmp_path: Path) -> None:

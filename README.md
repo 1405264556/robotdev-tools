@@ -8,8 +8,10 @@
 ## 中文
 
 RobotDev Tools 是面向机器人实验室的 **ROS 2 离线实验验收工具**。它直接读取
-rosbag2（SQLite3 / MCAP），自动计算 Topic 健康度和里程计运动指标，并生成
-PASS / WARN / FAIL 质量门禁、自包含 HTML 可视化报告以及适合 CI 的 JSON 结果。
+rosbag2（SQLite3 / MCAP），自动计算 Topic 健康度，并对激光雷达、IMU、里程计、TF、
+控制指令、关节状态、定位、规划轨迹和故障诊断进行专项检测。新版报告还会根据 bag 中的
+Topic/类型证据重建 ROS 节点职责和数据流，生成 PASS / WARN / FAIL 门禁、自包含 HTML
+可视化报告以及适合 CI 的 JSON 结果。
 
 - 不需要安装 ROS 2。
 - 数据只在本机处理，不上传 bag。
@@ -159,11 +161,11 @@ pipx uninstall robotdev-tools
 下载 wheel，然后在文件所在目录执行：
 
 ```powershell
-pipx install .\robotdev_tools-0.1.0-py3-none-any.whl
+pipx install .\robotdev_tools-0.2.0-py3-none-any.whl
 ```
 
 ```bash
-pipx install ./robotdev_tools-0.1.0-py3-none-any.whl
+pipx install ./robotdev_tools-0.2.0-py3-none-any.whl
 ```
 
 开发者从源码安装：
@@ -192,6 +194,14 @@ topics:
     max_gap_ms: 250
     max_jitter_ms: 20
 
+nodes:
+  lidar_driver:
+    required: true
+    topics: [/scan]
+  state_estimator:
+    required: true
+    topics: [/imu/data, /odom, /tf]
+
 odometry:
   topic: /odom
   max_speed_mps: 1.5
@@ -203,25 +213,45 @@ odometry:
 - 距离硬阈值不足 `warn_margin_pct`：`WARN`。
 - 全部满足：`PASS`。
 - 未传入配置：`NOT_EVALUATED`，避免把“仅完成分析”误认为“测试通过”。
+- `nodes` 验证的是“该节点职责所需 Topic 是否被记录”，不是运行时进程名称。
+
+> rosbag2 通常不保存发布者/订阅者对应的真实节点名称、服务、动作、参数和生命周期状态。
+> 因此报告中的节点为 **INFERRED_FROM_BAG（从 bag 推断）**。若要证明实际 ROS 图，请在
+> 机器人运行时配合 `ros2 node list`、`ros2 node info` 和 `ros2 topic info -v`。如果 bag
+> 包含 `/rosout`，工具还会列出日志中自报的节点名称，但不会据此虚构发布/订阅边。
 
 每次分析生成：
 
 ```text
 report/
 ├── report.html    # 单文件、可离线打开的可视化报告
-└── summary.json   # schema_version=1.0 的机器可读结果
+└── summary.json   # schema_version=1.1 的机器可读结果
 ```
 
 详细参数解释、路径规则、CI 示例和故障排查见
 [`docs/USAGE.zh-CN.md`](docs/USAGE.zh-CN.md)。
 
-### 指标与数据规模
+### 当前支持的检测内容
 
 所有 Topic：消息数、观测时长、平均/中位频率、周期抖动、最大间隔、断流数、重复和
 倒退时间戳。
 
-`nav_msgs/msg/Odometry`：XY 轨迹、累计里程、起终点位移、平均/最大/P95 线速度与角速度、
-最大加速度、位置跳变及阈值违规次数。
+| 子系统 | 标准消息 | 主要检测 |
+|---|---|---|
+| 激光雷达 | `LaserScan`、`PointCloud2` | 有效点比例、NaN/Inf、量程外点、扫描长度变化、空点云、frame |
+| IMU | `Imu` | 角速度/加速度模长、四元数归一误差、不可用姿态、NaN/Inf |
+| 里程计 | `Odometry` | XY 轨迹、里程/位移、线/角速度、加速度、位置跳变 |
+| TF | `TFMessage` | 父子关系、根节点、连通分量、环、多父节点、非法四元数 |
+| 控制指令 | `Twist`、`TwistStamped` | 最大线/角速度、活动/零指令比例、NaN/Inf |
+| 关节状态 | `JointState` | 关节列表、数组长度不一致、关节集合变化、NaN/Inf |
+| 定位结果 | `PoseWithCovarianceStamped`、`PoseStamped` | 位置跳变、协方差、frame、NaN/Inf |
+| 规划轨迹 | `Path` | 空轨迹、点数、路径长度、frame 变化 |
+| 故障状态 | `DiagnosticArray` | OK/WARN/ERROR/STALE 数量、受影响硬件、最新故障内容 |
+
+报告包含实验总览、九类子系统健康卡、推断的 ROS 职责图与数据流、TF 关系图、质量门禁、
+Topic 时序和里程计轨迹。未观察到的数据会标为缺失证据，不会伪造成节点故障。
+
+### 数据规模
 
 消息数、均值、标准差和最大值采用在线统计；图表和分位数默认每个流最多保留 20,000 点，
 因此大 bag 不会因图表数据无限增长而耗尽内存。报告会明确标注是否发生采样。
@@ -243,9 +273,9 @@ print(result.status, result.to_dict())
 
 | 数据集 | 注入情况 | 预期状态 |
 |---|---|---|
-| `normal` | 10 Hz `/scan` 与连续里程计 | `PASS` |
-| `low_rate` | 低频和断流 | `FAIL` |
-| `jump` | 里程计位置跳变及速度/加速度异常 | `FAIL` |
+| `normal` | 九类 ROS 数据完整；TF 连通，运动和诊断正常 | `PASS` |
+| `low_rate` | 激光雷达低频/断流并写入 Diagnostic WARN | `FAIL` |
+| `jump` | 里程计/定位跳变并写入 Diagnostic ERROR | `FAIL` |
 
 Windows：
 
@@ -270,8 +300,10 @@ cat ./robotdev-demo/normal/summary.json
 ## English
 
 RobotDev Tools is a local, ROS-free experiment acceptance tool for robotics teams. It reads ROS 2
-SQLite3 and MCAP bags, evaluates topic timing and odometry health, and writes a self-contained HTML
-report plus stable JSON output.
+SQLite3 and MCAP bags, evaluates Topic timing plus LiDAR, IMU, odometry, TF, commands, joints,
+localization, paths, and diagnostics, then writes a self-contained HTML report plus stable JSON.
+The report reconstructs node responsibilities and data flow from recorded Topic/type evidence; it
+does not claim to recover process-level node names that rosbag2 does not normally store.
 
 Choose either workflow:
 
@@ -297,8 +329,9 @@ should use `robotdev analyze`. Windows paths containing spaces or non-ASCII char
 quote them in PowerShell or CMD.
 
 Supported: Python 3.10–3.13 on Windows/Linux, rosbag2 directories, raw `.db3`/`.mcap`, bounded-memory
-topic timing metrics, and `nav_msgs/msg/Odometry` motion checks. Analysis is local-only. Unknown custom
-messages retain timing metrics when their payload cannot be decoded.
+topic timing metrics, nine ROS subsystem analyzers, inferred framework/TF views, and configurable
+Topic-based node responsibility contracts. Analysis is local-only. Unknown custom messages retain
+timing metrics when their payload cannot be decoded.
 
 Read the [detailed Chinese guide](docs/USAGE.zh-CN.md), [test dataset and acceptance guide](docs/TESTING.md),
 and [contribution guide](CONTRIBUTING.md).

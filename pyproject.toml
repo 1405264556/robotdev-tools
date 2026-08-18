@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robotdev-tools"
-version = "0.1.0"
+version = "0.2.0"
 description = "ROS-free rosbag2 experiment health reports for robotics teams"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -18,10 +18,11 @@ from robotdev_tools.models import (
     OdometryMetrics,
     TopicMetrics,
 )
+from robotdev_tools.specialized import SpecializedAnalyzers, build_framework
 from robotdev_tools.stats import OdometryAccumulator, TopicAccumulator, percentile
 
-SCHEMA_VERSION = "1.0"
-TOOL_VERSION = "0.1.0"
+SCHEMA_VERSION = "1.1"
+TOOL_VERSION = "0.2.0"
 DEFAULT_SAMPLE_LIMIT = 20_000
 
 
@@ -187,6 +188,8 @@ def analyze_bag(
     accumulators: dict[str, TopicAccumulator] = {}
     odometry_accumulator: OdometryAccumulator | None = None
     odometry_topic: str | None = None
+    specialized = SpecializedAnalyzers()
+    decode_warning_counts: dict[str, int] = {}
 
     try:
         with AnyReader(_reader_paths(bag_path), **reader_kwargs) as reader:
@@ -209,6 +212,7 @@ def analyze_bag(
                         f"Topic {connection.topic} has multiple message types; "
                         f"using {current.message_type}."
                     )
+                specialized.prepare(connection.topic, connection.msgtype)
 
             if loaded_config is not None and loaded_config.odometry is not None:
                 odometry_topic = loaded_config.odometry.topic
@@ -223,30 +227,46 @@ def analyze_bag(
             for connection, timestamp_ns, rawdata in reader.messages():
                 accumulator = accumulators[connection.topic]
                 accumulator.add(int(timestamp_ns))
-                if odometry_accumulator is None or connection.topic != odometry_topic:
+                specialized_topic = connection.topic in specialized.accumulators
+                odometry_message = (
+                    odometry_accumulator is not None and connection.topic == odometry_topic
+                )
+                if not specialized_topic and not odometry_message:
                     continue
-                if connection.msgtype != "nav_msgs/msg/Odometry":
+                if odometry_message and connection.msgtype != "nav_msgs/msg/Odometry":
+                    assert odometry_accumulator is not None
                     odometry_accumulator.decode_errors += 1
-                    continue
                 try:
                     message: Any = reader.deserialize(rawdata, connection.msgtype)
-                    position = _vector(message.pose.pose.position)
-                    linear = _vector(message.twist.twist.linear)
-                    angular = _vector(message.twist.twist.angular)
-                    rule = loaded_config.odometry if loaded_config is not None else None
-                    odometry_accumulator.add(
-                        int(timestamp_ns),
-                        position,
-                        linear,
-                        angular,
-                        max_speed_mps=rule.max_speed_mps if rule else None,
-                        max_accel_mps2=rule.max_accel_mps2 if rule else None,
-                        max_position_jump_m=rule.max_position_jump_m if rule else None,
-                    )
+                    if specialized_topic:
+                        specialized.add(connection.topic, message)
+                    if odometry_message and connection.msgtype == "nav_msgs/msg/Odometry":
+                        assert odometry_accumulator is not None
+                        position = _vector(message.pose.pose.position)
+                        linear = _vector(message.twist.twist.linear)
+                        angular = _vector(message.twist.twist.angular)
+                        rule = loaded_config.odometry if loaded_config is not None else None
+                        odometry_accumulator.add(
+                            int(timestamp_ns),
+                            position,
+                            linear,
+                            angular,
+                            max_speed_mps=rule.max_speed_mps if rule else None,
+                            max_accel_mps2=rule.max_accel_mps2 if rule else None,
+                            max_position_jump_m=rule.max_position_jump_m if rule else None,
+                        )
                 except (AttributeError, KeyError, TypeError, ValueError) as exc:
-                    odometry_accumulator.decode_errors += 1
-                    if odometry_accumulator.decode_errors <= 3:
-                        warnings.append(f"Could not decode odometry message: {exc}")
+                    if specialized_topic:
+                        specialized.decode_failed(connection.topic)
+                    if odometry_message:
+                        assert odometry_accumulator is not None
+                        odometry_accumulator.decode_errors += 1
+                    warning_count = decode_warning_counts.get(connection.topic, 0)
+                    if warning_count < 3:
+                        warnings.append(
+                            f"Could not decode specialized message on {connection.topic}: {exc}"
+                        )
+                    decode_warning_counts[connection.topic] = warning_count + 1
 
             topic_metrics = sorted(
                 (
@@ -271,6 +291,8 @@ def analyze_bag(
                     )
 
             status, checks = evaluate_gates(topic_metrics, odometry_metrics, loaded_config)
+            subsystems, tf_topology, observed_rosout_nodes = specialized.finalize(odometry_metrics)
+            framework = build_framework(subsystems, tf_topology, observed_rosout_nodes)
             ros_distro = getattr(reader, "ros_distro", None)
             if ros_distro is None and loaded_config is not None:
                 ros_distro = loaded_config.ros_distro
@@ -299,5 +321,7 @@ def analyze_bag(
         topics=topic_metrics,
         checks=checks,
         odometry=odometry_metrics,
+        subsystems=subsystems,
+        framework=framework,
         warnings=warnings,
     )

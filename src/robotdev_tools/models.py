@@ -6,6 +6,8 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 Status = Literal["PASS", "WARN", "FAIL", "NOT_EVALUATED"]
+HealthStatus = Literal["HEALTHY", "DEGRADED", "FAULT", "NO_DATA"]
+MetricValue = str | int | float | bool | None
 
 
 @dataclass(slots=True)
@@ -72,6 +74,81 @@ class OdometryMetrics:
 
 
 @dataclass(slots=True)
+class DetailMetric:
+    """One human-readable subsystem metric."""
+
+    key: str
+    label: str
+    value: MetricValue
+    unit: str | None = None
+
+
+@dataclass(slots=True)
+class SubsystemAnalysis:
+    """Health summary for one ROS responsibility area."""
+
+    subsystem_id: str
+    name: str
+    status: HealthStatus
+    topics: list[str]
+    message_types: list[str]
+    metrics: list[DetailMetric]
+    issues: list[str] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class InferredNode:
+    """Node responsibility inferred from recorded Topic evidence."""
+
+    node_id: str
+    display_name: str
+    responsibility: str
+    status: HealthStatus
+    topics: list[str]
+    evidence: str
+    confidence: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
+
+
+@dataclass(slots=True)
+class DataFlowEdge:
+    """One inferred connection between ROS responsibilities."""
+
+    source: str
+    target: str
+    relation: str
+
+
+@dataclass(slots=True)
+class FrameEdge:
+    """Observed parent-child TF relationship."""
+
+    parent: str
+    child: str
+    message_count: int
+    is_static: bool
+
+
+@dataclass(slots=True)
+class ROSFrameworkAnalysis:
+    """Offline ROS graph reconstructed from bag evidence."""
+
+    discovery_mode: Literal["INFERRED_FROM_BAG"]
+    status: HealthStatus
+    coverage_pct: float
+    observed_rosout_nodes: list[str]
+    inferred_nodes: list[InferredNode]
+    data_flows: list[DataFlowEdge]
+    frame_edges: list[FrameEdge]
+    tf_roots: list[str]
+    tf_component_count: int
+    tf_cycles: list[list[str]]
+    multiple_parent_frames: list[str]
+    missing_subsystems: list[str]
+    limitations: list[str]
+
+
+@dataclass(slots=True)
 class BagMetadata:
     """Input bag metadata."""
 
@@ -98,6 +175,8 @@ class AnalysisResult:
     topics: list[TopicMetrics]
     checks: list[CheckResult]
     odometry: OdometryMetrics | None = None
+    subsystems: list[SubsystemAnalysis] = field(default_factory=list)
+    framework: ROSFrameworkAnalysis | None = None
     warnings: list[str] = field(default_factory=list)
 
     def to_dict(self, *, include_samples: bool = False) -> dict[str, Any]:

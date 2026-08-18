@@ -150,6 +150,9 @@ robotdev gui --bag /data/bags/run-01 -c ./robotdev.yaml -o ./reports/run-01
 点击 **开始分析** 后，读取和统计在后台线程执行。状态栏会显示最终状态和两个输出文件。
 输出目录可以已存在；同名报告文件会被新结果替换，因此建议每次实验使用独立目录。
 
+桌面窗口负责选择输入和启动任务；详细结果会在完成后打开的本地 HTML 中显示。HTML 不只是
+PASS/FAIL 结果页，还包括 ROS 职责框架、子系统健康卡、TF 拓扑、Topic 时序和运动轨迹。
+
 ### 4.2 界面无法启动
 
 - Windows 出现 Tcl/Tk 错误：使用 python.org 安装器修改 Python，启用 Tcl/Tk。
@@ -215,6 +218,17 @@ topics:
     max_gap_ms: 250
     max_jitter_ms: 20
 
+nodes:
+  lidar_driver:
+    required: true
+    topics: [/scan]
+  state_estimator:
+    required: true
+    topics: [/imu/data, /odom, /tf]
+  navigation:
+    required: true
+    topics: [/amcl_pose, /plan, /cmd_vel]
+
 odometry:
   topic: /odom
   max_speed_mps: 1.5
@@ -234,10 +248,43 @@ configs/
 阈值应来自设备规格、历史正常实验分布和任务安全边界，而不是直接复制示例值。先用无配置模式
 分析 5–10 次正常实验，再设置预期频率、间隔和运动上限会更可靠。
 
+### 6.1 节点职责检测的含义
+
+普通 rosbag2 记录消息，却通常不记录每条连接对应的真实发布者/订阅者节点名称，也不保存完整
+服务、动作、参数和生命周期图。因此离线报告采用两层表达：
+
+1. **自动推断职责**：根据标准消息类型识别激光、IMU、里程计、TF、控制、关节、定位、规划
+   和诊断职责，显示 `INFERRED_FROM_BAG`。
+2. **日志节点名证据**：若录制了 `/rosout`（`rcl_interfaces/msg/Log`），报告列出消息 `name`
+   中节点自报的名称，但它不能证明全程存活，也不能恢复发布/订阅边。
+3. **配置职责合同**：`nodes.<name>.topics` 要求某个逻辑职责的 Topic 证据完整。必需合同缺少
+   任意 Topic 时为 FAIL，可选合同缺失时为 WARN。
+
+例如 `state_estimator` 合同通过，仅表示 `/imu/data`、`/odom`、`/tf` 确实被录入 bag；它不证明
+运行时进程恰好叫 `/state_estimator`。需要真实节点图时，在实验运行期间另行保存：
+
+```bash
+ros2 node list
+ros2 node info /node_name
+ros2 topic info /topic_name -v
+```
+
 ## 7. 输出解释
 
-`report.html` 包含总览、Topic 表格、时序图、里程计轨迹、检查结果和建议。可直接发给同事，
-但报告中可能包含 Topic 名称、路径和实验元数据，外发前仍应检查敏感信息。
+`report.html` 的主要区域：
+
+| 区域 | 用途 |
+|---|---|
+| Experiment overview | 总体门禁、bag 时长/消息数、九类职责覆盖率 |
+| ROS framework analysis | 从 Topic/类型推断的职责节点、数据流和缺失子系统 |
+| Subsystem diagnostics | 激光、IMU、里程计、TF、控制、关节、定位、规划、故障逐项指标 |
+| TF tree analysis | 父子 frame、根节点、连通分量、环、多父节点和静态/动态关系 |
+| Quality gates | 配置阈值、实测值、PASS/WARN/FAIL 和修复建议 |
+| Topic timing | 全量 Topic 的频率、抖动、最大间隔、断流和时间戳问题 |
+| Odometry trajectory | 可交互 XY 轨迹及运动极值 |
+
+报告是自包含文件，可直接发给同事；但其中可能包含 Topic 名称、bag 路径、frame 名和故障文本，
+外发前仍应检查敏感信息。
 
 `summary.json` 用于程序处理，顶层至少包含：
 
@@ -245,8 +292,27 @@ configs/
 - bag 元数据
 - Topic 指标
 - odometry 指标（可用时）
+- `subsystems` 九类专项检测结果
+- `framework` 推断职责、数据流和 TF 拓扑
 - checks
 - 总体 `status`
+
+### 7.1 九类专项检测
+
+| 类别 | 识别类型 | 输出重点 |
+|---|---|---|
+| LiDAR | `sensor_msgs/msg/LaserScan`、`PointCloud2` | 点/束数、有效比例、NaN/Inf、量程外点、扫描长度一致性、空点云 |
+| IMU | `sensor_msgs/msg/Imu` | 角速度和加速度模长、四元数误差、姿态不可用、非有限值 |
+| Odometry | `nav_msgs/msg/Odometry` | 距离/位移、速度分位数、加速度、跳变和轨迹 |
+| TF | `tf2_msgs/msg/TFMessage` | frame 边、根、组件、环、多父节点、非法旋转 |
+| Control | `geometry_msgs/msg/Twist`、`TwistStamped` | 活动比例、零指令、最大线/角速度、非有限值 |
+| Joint states | `sensor_msgs/msg/JointState` | 关节名称、字段长度、集合变化、非有限值 |
+| Localization | `PoseWithCovarianceStamped`、`PoseStamped` | 跳变、协方差、frame 一致性、非有限值 |
+| Planning | `nav_msgs/msg/Path` | 空规划、轨迹点数、路径长度、frame 一致性 |
+| Diagnostics | `diagnostic_msgs/msg/DiagnosticArray` | OK/WARN/ERROR/STALE、受影响硬件和最新故障 |
+
+专项卡的 `HEALTHY/DEGRADED/FAULT/NO_DATA` 是数据诊断结论；顶层 `PASS/WARN/FAIL` 则由 YAML
+质量门禁决定。未配置门禁时，即使专项卡健康，顶层仍是 `NOT_EVALUATED`。
 
 退出码：
 
@@ -312,5 +378,6 @@ pipx uninstall robotdev-tools
 robotdev demo --output ./robotdev-demo
 ```
 
+三套数据都包含激光、IMU、里程计、TF、控制指令、关节状态、定位、规划和诊断消息。
 预期 `normal=PASS`、`low_rate=FAIL`、`jump=FAIL`。完整检查步骤和真实 bag 反馈模板见
 [`TESTING.md`](TESTING.md)。

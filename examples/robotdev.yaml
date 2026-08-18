@@ -9,6 +9,28 @@ topics:
     max_gap_ms: 250
     max_jitter_ms: 20
 
+# rosbag2 generally does not store process-level node names. These contracts
+# verify that the Topics expected from each node responsibility were recorded.
+nodes:
+  lidar_driver:
+    required: true
+    topics: [/scan]
+  state_estimator:
+    required: true
+    topics: [/imu/data, /odom, /tf]
+  motion_controller:
+    required: true
+    topics: [/cmd_vel, /joint_states]
+  localization:
+    required: true
+    topics: [/amcl_pose]
+  planner:
+    required: true
+    topics: [/plan]
+  diagnostics:
+    required: true
+    topics: [/diagnostics]
+
 odometry:
   topic: /odom
   max_speed_mps: 1.5

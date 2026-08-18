@@ -77,8 +77,7 @@ def evaluate_gates(
                     measured=metrics.mean_rate_hz,
                     threshold=minimum,
                     message=(
-                        f"Mean rate is {metrics.mean_rate_hz:.3f} Hz; "
-                        f"minimum is {minimum:.3f} Hz."
+                        f"Mean rate is {metrics.mean_rate_hz:.3f} Hz; minimum is {minimum:.3f} Hz."
                     ),
                     suggestion="Inspect publisher load, QoS, transport, and recording throughput."
                     if status != "PASS"
@@ -118,13 +117,48 @@ def evaluate_gates(
                 )
             )
 
+    for node_name, node_rule in config.nodes.items():
+        recorded_topics = [topic for topic in node_rule.topics if topic in by_name]
+        missing_topics = [topic for topic in node_rule.topics if topic not in by_name]
+        if missing_topics:
+            status = "FAIL" if node_rule.required else "WARN"
+            checks.append(
+                CheckResult(
+                    check_id=f"node:{node_name}:topic_contract",
+                    status=status,
+                    topic=missing_topics[0],
+                    metric="recorded_topics",
+                    measured=len(recorded_topics),
+                    threshold=len(node_rule.topics),
+                    message=(
+                        f"Node responsibility {node_name} is missing recorded evidence: "
+                        f"{', '.join(missing_topics)}."
+                    ),
+                    suggestion=(
+                        "Check the node lifecycle and recorder Topic list. Rosbag2 cannot prove "
+                        "the runtime process name, so this gate validates its Topic contract."
+                    ),
+                )
+            )
+        else:
+            checks.append(
+                CheckResult(
+                    check_id=f"node:{node_name}:topic_contract",
+                    status="PASS",
+                    metric="recorded_topics",
+                    measured=len(recorded_topics),
+                    threshold=len(node_rule.topics),
+                    message=(f"Node responsibility {node_name} has all configured Topic evidence."),
+                    suggestion=(
+                        "The actual runtime node name is not stored in rosbag2; use ros2 node info "
+                        "for live publisher/subscriber verification."
+                    ),
+                )
+            )
+
     if config.odometry is not None:
         odometry_rule = config.odometry
-        if (
-            odometry is None
-            or odometry.topic != odometry_rule.topic
-            or odometry.decoded_count == 0
-        ):
+        if odometry is None or odometry.topic != odometry_rule.topic or odometry.decoded_count == 0:
             checks.append(
                 CheckResult(
                     check_id=f"odometry:{odometry_rule.topic}:decoded",

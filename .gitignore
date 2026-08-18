@@ -12,5 +12,6 @@ build/
 dist/
 demo-output/
 report/
+.artifacts/
 *.db3
 *.mcap

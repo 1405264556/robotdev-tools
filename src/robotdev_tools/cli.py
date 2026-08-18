@@ -44,9 +44,9 @@ def analyze(
     config: Annotated[
         Path | None, typer.Option("--config", "-c", help="Versioned robotdev YAML config")
     ] = None,
-    output: Annotated[
-        Path, typer.Option("--output", "-o", help="Report output directory")
-    ] = Path("report"),
+    output: Annotated[Path, typer.Option("--output", "-o", help="Report output directory")] = Path(
+        "report"
+    ),
     sample_limit: Annotated[
         int, typer.Option(help="Maximum retained chart points per topic")
     ] = 20_000,
@@ -67,9 +67,9 @@ def analyze(
 
 @app.command()
 def demo(
-    output: Annotated[
-        Path, typer.Option("--output", "-o", help="Demo output directory")
-    ] = Path("demo-output"),
+    output: Annotated[Path, typer.Option("--output", "-o", help="Demo output directory")] = Path(
+        "demo-output"
+    ),
 ) -> None:
     """Generate normal and faulty bags plus ready-to-open reports."""
 
@@ -85,7 +85,14 @@ def demo(
         config_path.write_text(
             "version: 1\nwarn_margin_pct: 10\ntopics:\n  /scan:\n    required: true\n"
             "    expected_rate_hz: 10\n    rate_tolerance_pct: 10\n    max_gap_ms: 250\n"
-            "    max_jitter_ms: 20\nodometry:\n  topic: /odom\n  max_speed_mps: 1.5\n"
+            "    max_jitter_ms: 20\nnodes:\n  lidar_driver:\n    required: true\n"
+            "    topics: [/scan]\n  state_estimator:\n    required: true\n"
+            "    topics: [/imu/data, /odom, /tf]\n  motion_controller:\n"
+            "    required: true\n    topics: [/cmd_vel, /joint_states]\n"
+            "  localization:\n    required: true\n    topics: [/amcl_pose]\n"
+            "  planner:\n    required: true\n    topics: [/plan]\n  diagnostics:\n"
+            "    required: true\n    topics: [/diagnostics]\nodometry:\n  topic: /odom\n"
+            "  max_speed_mps: 1.5\n"
             "  max_accel_mps2: 2.0\n  max_position_jump_m: 0.5\n",
             encoding="utf-8",
         )
@@ -97,12 +104,12 @@ def demo(
             html_path, _ = write_report(result, output / scenario)
             statuses.append((scenario, result.status, html_path))
         links = "\n".join(
-            f'<li><strong>{name}</strong> — {status}: '
+            f"<li><strong>{name}</strong> — {status}: "
             f'<a href="{path.relative_to(output).as_posix()}">open report</a></li>'
             for name, status, path in statuses
         )
         (output / "index.html").write_text(
-            "<!doctype html><meta charset=\"utf-8\"><title>RobotDev demo</title>"
+            '<!doctype html><meta charset="utf-8"><title>RobotDev demo</title>'
             "<style>body{font:16px system-ui;max-width:760px;margin:60px auto;"
             "line-height:1.6}</style>"
             f"<h1>RobotDev Tools demo</h1><ul>{links}</ul>",
