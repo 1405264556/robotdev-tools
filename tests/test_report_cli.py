@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
@@ -44,3 +45,28 @@ def test_cli_version() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert "0.1.0" in result.stdout
+
+
+def test_cli_gui_forwards_preselected_paths(tmp_path: Path) -> None:
+    bag = tmp_path / "bag"
+    config = tmp_path / "robotdev.yaml"
+    output = tmp_path / "report"
+    with patch("robotdev_tools.gui.launch_gui") as launch_gui:
+        result = runner.invoke(
+            app,
+            [
+                "gui",
+                "--bag",
+                str(bag),
+                "--config",
+                str(config),
+                "--output",
+                str(output),
+            ],
+        )
+    assert result.exit_code == 0
+    launch_gui.assert_called_once_with(
+        bag_path=bag,
+        config_path=config,
+        output_path=output,
+    )

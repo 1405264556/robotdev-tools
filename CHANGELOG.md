@@ -2,6 +2,14 @@
 
 All notable changes to RobotDev Tools are documented here.
 
+## Unreleased
+
+- Add a local desktop interface through `robotdev gui` with file/folder selection and automatic
+  report opening.
+- Expand Windows, Linux, PowerShell, CMD, Bash, server, installation, upgrade, and troubleshooting
+  instructions.
+- Add reproducible demo dataset and real-bag acceptance procedures.
+
 ## 0.1.0 - 2026-08-18
 
 - Add ROS-free SQLite3 and MCAP analysis.
