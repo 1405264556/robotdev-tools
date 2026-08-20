@@ -165,6 +165,16 @@ print([(x["parent"], x["child"]) for x in r["framework"]["frame_edges"]])
 PY
 ```
 
+### 自动发现功能核对
+
+```powershell
+robotdev discover ".\robotdev-demo\bags"
+robotdev discover ".\robotdev-demo\bags" --json
+```
+
+预期发现 `normal`、`low_rate`、`jump` 三个 SQLite3 bag；每个结果均为 11 Topics，JSON 中包含
+`topic_types`。在 GUI 中选择 `robotdev-demo\bags`，应同屏出现三行并自动选中第一个可读结果。
+
 ## 5. 真实 bag 验收矩阵
 
 建议至少使用三份真实数据：一份已知正常、一份传感器断流、一份运动异常或定位跳变。
@@ -173,6 +183,8 @@ PY
 |---|---|---|
 | 安装 | Windows 与 Linux 各运行 `robotdev --version` | 命令可执行 |
 | 格式 | `.db3` 与 `.mcap` 各分析一份 | 均生成 HTML/JSON |
+| 自动发现 | 扫描包含多个嵌套 bag 的上级目录 | 正确列出路径、DB3/MCAP、Topic、消息数和时长 |
+| 损坏输入 | 使用损坏 `.db3` 或 DB3/MCAP 混合目录 | 标记不可读，不允许误当正常 bag 分析 |
 | 路径 | 使用含中文和空格的目录 | 不报路径错误 |
 | 正常数据 | 使用实验室门禁分析 | PASS 或可解释的 WARN |
 | 断流数据 | 移除/停止关键传感器 | required、rate 或 gap 为 FAIL |

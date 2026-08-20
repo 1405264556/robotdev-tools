@@ -4,8 +4,17 @@ All notable changes to RobotDev Tools are documented here.
 
 ## Unreleased
 
+## 0.3.0 - 2026-08-20
+
 - Improve GitHub discoverability with explicit rosbag2 analyzer, validator, diagnostics, MCAP/DB3,
   automated-testing, and quality-gate terminology in repository metadata and README entry points.
+- Add fast recursive rosbag2 discovery for standard directories, raw DB3/MCAP files, metadata paths,
+  split recordings, Unicode paths, and nested experiment folders.
+- Add storage magic detection and lightweight previews for message count, duration, Topic names, and
+  ROS message types without deserializing payloads.
+- Add `robotdev discover PATH`, human-readable output, JSON output, and configurable scan depth.
+- Redesign the desktop interface around a multi-bag candidate table, type preview, input validation,
+  automatic report-path suggestions, and clearer bilingual workflow states.
 
 ## 0.2.0 - 2026-08-18
 

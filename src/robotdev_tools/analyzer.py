@@ -22,7 +22,7 @@ from robotdev_tools.specialized import SpecializedAnalyzers, build_framework
 from robotdev_tools.stats import OdometryAccumulator, TopicAccumulator, percentile
 
 SCHEMA_VERSION = "1.1"
-TOOL_VERSION = "0.2.0"
+TOOL_VERSION = "0.3.0"
 DEFAULT_SAMPLE_LIMIT = 20_000
 
 

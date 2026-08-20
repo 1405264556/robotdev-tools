@@ -19,6 +19,8 @@
 - SQLite3 存储文件：扩展名为 `.db3`。
 - MCAP 存储文件：扩展名为 `.mcap`。
 - Windows/Linux 中带空格、中文或其他 Unicode 字符的路径。
+- 选择 `metadata.yaml` 时自动使用它所在的标准 rosbag2 目录。
+- 选择实验数据上级目录时，自动递归发现其中的多个 bag。
 
 ## 2. Windows 安装
 
@@ -142,12 +144,18 @@ robotdev gui --bag /data/bags/run-01 -c ./robotdev.yaml -o ./reports/run-01
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
-| Bag 数据 | 是 | rosbag2 目录、`.db3` 或 `.mcap` 文件 |
+| 文件或扫描目录 | 是 | `.db3`、`.mcap`、`metadata.yaml`、bag 目录或多次实验的上级目录 |
+| 候选表格 | 是 | 显示格式、输入类型、Topic 数、消息数、时长和路径；选择一行作为分析输入 |
+| Topic 类型预览 | 自动 | 显示识别到的 Topic 与标准消息类型，不读取消息载荷 |
 | Config 门禁 | 否 | 版本化门禁配置；留空则结果为 `NOT_EVALUATED` |
 | Output 报告 | 是 | 保存 `report.html` 和 `summary.json` 的目录 |
 | 完成后打开报告 | 否 | 分析完成后用系统默认浏览器打开报告 |
 
-点击 **开始分析** 后，读取和统计在后台线程执行。状态栏会显示最终状态和两个输出文件。
+选择文件后会立即识别；选择目录后最多递归 4 层并合并同一目录中的拆分存储文件。扫描只打开
+bag 索引，不反序列化消息内容，因此可以先快速比较多次实验。损坏文件、SQLite3/MCAP 混放等
+情况会显示明确错误并禁止开始分析。
+
+点击 **开始分析并生成报告** 后，完整读取和统计在后台线程执行。状态栏会显示最终状态和两个输出文件。
 输出目录可以已存在；同名报告文件会被新结果替换，因此建议每次实验使用独立目录。
 
 桌面窗口负责选择输入和启动任务；详细结果会在完成后打开的本地 HTML 中显示。HTML 不只是
@@ -162,7 +170,32 @@ PASS/FAIL 结果页，还包括 ROS 职责框架、子系统健康卡、TF 拓�
 
 ## 5. 终端命令
 
-### 5.1 analyze
+### 5.1 discover
+
+```text
+robotdev discover SEARCH_PATH [--max-depth N] [--json]
+```
+
+它用于在分析前发现并识别 rosbag2：
+
+```powershell
+# Windows：扫描包含多次实验的目录
+robotdev discover "F:\实验数据"
+
+# 输出 JSON，供脚本筛选路径和存储格式
+robotdev discover "F:\实验数据" --json
+```
+
+```bash
+# Linux
+robotdev discover /data/experiments
+robotdev discover /data/experiments --max-depth 2 --json
+```
+
+识别结果包含 `storage_format`、`input_kind`、`storage_files`、`metadata_present`、文件大小、
+消息数、时长以及完整 Topic/消息类型。此命令不执行质量门禁，也不生成报告。
+
+### 5.2 analyze
 
 ```text
 robotdev analyze BAG_PATH [OPTIONS]
@@ -187,7 +220,7 @@ robotdev analyze ./bag -o ./report
 robotdev analyze ./bag -c ./robotdev.yaml -o ./report
 ```
 
-### 5.2 demo
+### 5.3 demo
 
 ```bash
 robotdev demo --output ./robotdev-demo
@@ -196,7 +229,7 @@ robotdev demo --output ./robotdev-demo
 输出目录必须为空，避免误覆盖现有数据。该命令生成 `normal`、`low_rate` 和 `jump` 三套
 合成 bag、配置、三份报告以及总入口 `index.html`。
 
-### 5.3 gui
+### 5.4 gui
 
 ```text
 robotdev gui [--bag PATH] [-c CONFIG] [-o OUTPUT]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 from typing import Annotated
@@ -12,6 +13,7 @@ from robotdev_tools import __version__
 from robotdev_tools.analyzer import AnalysisError, analyze_bag
 from robotdev_tools.config import ConfigError
 from robotdev_tools.demo import generate_demo_bag
+from robotdev_tools.discovery import discover_rosbags
 from robotdev_tools.report import write_report
 
 app = typer.Typer(
@@ -63,6 +65,47 @@ def analyze(
     typer.echo(f"JSON: {json_path}")
     if result.status == "FAIL":
         raise typer.Exit(code=2)
+
+
+@app.command()
+def discover(
+    search_path: Annotated[
+        Path, typer.Argument(help="File or directory to scan for rosbag2 recordings")
+    ],
+    max_depth: Annotated[int, typer.Option(help="Maximum recursive directory depth")] = 4,
+    as_json: Annotated[
+        bool, typer.Option("--json", help="Write machine-readable discovery results")
+    ] = False,
+) -> None:
+    """Find rosbag2 recordings and identify DB3/MCAP plus Topic types."""
+
+    try:
+        candidates = discover_rosbags(search_path, max_depth=max_depth)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    if as_json:
+        typer.echo(
+            json.dumps(
+                [candidate.to_dict() for candidate in candidates],
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return
+    if not candidates:
+        typer.echo(f"No rosbag2 .db3 or .mcap recordings found under: {search_path}")
+        return
+    typer.echo(f"Found {len(candidates)} rosbag2 recording(s):")
+    for candidate in candidates:
+        state = "readable" if candidate.readable else f"error: {candidate.error}"
+        topics = candidate.topic_count if candidate.topic_count is not None else "?"
+        messages = candidate.message_count if candidate.message_count is not None else "?"
+        duration = f"{candidate.duration_s:.3f}s" if candidate.duration_s is not None else "?"
+        typer.echo(
+            f"[{candidate.storage_format}] {topics} topics | {messages} messages | "
+            f"{duration} | {state}\n  {candidate.path}"
+        )
 
 
 @app.command()

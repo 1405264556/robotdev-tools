@@ -44,7 +44,7 @@ robotdev analyze /path/to/rosbag2 --config robotdev.yaml --output report
 
 | 使用方式 | 适合场景 | 启动方法 | 结果查看 |
 |---|---|---|---|
-| 桌面界面 | 首次体验、单次分析、不熟悉命令行 | `robotdev gui` | 完成后自动在浏览器打开 |
+| 桌面界面 | 自动扫描目录、比较多个 bag、单次分析 | `robotdev gui` | 先预览类型，完成后打开报告 |
 | 终端命令 | 批量实验、脚本、服务器、CI | `robotdev analyze ...` | 手动打开 `report.html` |
 | 演示数据 | 验证安装、了解 PASS/FAIL 报告 | `robotdev demo ...` | 打开演示目录的 `index.html` |
 
@@ -122,11 +122,13 @@ Fedora 桌面界面的 Tk 依赖为 `sudo dnf install python3-tkinter`。SSH、�
 
 运行 `robotdev gui` 后：
 
-1. 在 **Bag 数据** 中选择标准 rosbag2 目录，或直接选择 `.db3` / `.mcap` 文件。
-2. 在 **Config 门禁** 中选择质量门禁 YAML；可以留空，此时只计算指标，状态为 `NOT_EVALUATED`。
-3. 在 **Output 报告** 中选择报告目录。
-4. 点击 **开始分析**。分析在后台运行，界面不会上传数据。
-5. 完成后默认打开 `report.html`；也可点击 **打开上次报告** 再次查看。
+1. 选择单个 `.db3`、`.mcap`、`metadata.yaml`，或选择一个包含多次实验的上级目录。
+2. 工具自动扫描最多 4 层目录，识别标准 rosbag2 目录、裸存储文件和拆分 bag。
+3. 在候选表中比较存储格式、输入类型、Topic 数、消息数、时长和路径。
+4. 选中一行后查看 Topic 与标准消息类型预览；损坏或混合格式会明确标红且禁止分析。
+5. 在 **Config 门禁** 中选择 YAML；可留空，此时顶层状态为 `NOT_EVALUATED`。
+6. 确认自动建议的报告目录，点击 **开始分析并生成报告**。
+7. 完成后默认打开 `report.html`；也可点击 **打开上次报告**。
 
 可以预填路径，减少重复选择：
 
@@ -139,6 +141,27 @@ robotdev gui --bag "/data/bags/run-01" -c "./robotdev.yaml" -o "./report"
 ```
 
 ### 终端分析方法
+
+先自动发现目录中的 rosbag2：
+
+```bash
+# 人类可读列表：格式、Topic 数、消息数、时长和路径
+robotdev discover /data/robot-experiments
+
+# 机器可读结果，包含完整 Topic/消息类型列表
+robotdev discover /data/robot-experiments --json
+
+# 控制递归扫描深度
+robotdev discover /data/robot-experiments --max-depth 2
+```
+
+Windows PowerShell 示例：
+
+```powershell
+robotdev discover "F:\实验数据" --json
+```
+
+选择发现结果后再执行分析：
 
 ```text
 robotdev analyze BAG_PATH [--config CONFIG] [--output DIRECTORY] [--sample-limit N]
@@ -183,11 +206,11 @@ pipx uninstall robotdev-tools
 下载 wheel，然后在文件所在目录执行：
 
 ```powershell
-pipx install .\robotdev_tools-0.2.0-py3-none-any.whl
+pipx install .\robotdev_tools-0.3.0-py3-none-any.whl
 ```
 
 ```bash
-pipx install ./robotdev_tools-0.2.0-py3-none-any.whl
+pipx install ./robotdev_tools-0.3.0-py3-none-any.whl
 ```
 
 开发者从源码安装：
@@ -333,6 +356,9 @@ Choose either workflow:
 ```bash
 # Local desktop interface
 robotdev gui
+
+# Recursively discover DB3/MCAP bags and inspect Topic types
+robotdev discover /path/to/experiments
 
 # Terminal / server / CI
 robotdev analyze /path/to/rosbag2 --config examples/robotdev.yaml --output report
